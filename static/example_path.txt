@@ -1,0 +1,15 @@
+0.000, 0.000, 30.000
+0.500, 4.000, 45.000
+1.500, 8.000, 55.000
+3.000, 12.000, 60.000
+5.000, 16.000, 60.000
+7.500, 20.000, 58.000
+10.500, 23.500, 52.000
+14.000, 26.500, 46.000
+18.000, 29.000, 42.000
+22.000, 30.500, 40.000
+26.000, 31.500, 38.000
+30.000, 32.000, 30.000
+endData
+# Everything below endData is path.jerryio editor metadata and is ignored.
+# This is a sample path.jerryio export (x, y, speed) in field-center inches.
