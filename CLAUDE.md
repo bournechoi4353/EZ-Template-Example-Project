@@ -92,7 +92,7 @@ Key options:
 
 ## Autons (selector, in main.cpp)
 
-Default = **"pushbacktest"** (first entry). Real autons: `pushbacktest`, `jerryio_path_example` (JerryIO Path), `BC2145AUTO` + `_fullsend` (drift), `pistons`.
+Default = **"overrideTest"** (first entry). Real autons: `overrideTest`, `jerryio_path_example` (JerryIO Path), `BC2145AUTO` + `_fullsend` (drift), `pistons`.
 Tuning/diagnostic tools: `Measure Offsets`, `Turn Test`, `Tracker Dir`, `Odom Spin`, `Odom Drive`, `Odom Sandbox`, `Motion Profile`, `Profiling Showcase`, `Wall Reset`, `MCL Test`.
 
 ## Conventions

@@ -67,7 +67,7 @@ void initialize() {
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.autons_add({
       // Default auton -- the full showcase for the team.
-      {"pushbacktest\n\nMatch drive routine: intake, score, hood, reposition, wing (encoder + IMU).", pushbacktest},
+      {"overrideTest\n\nMatch drive routine: intake, score, hood, reposition, wing (encoder + IMU).", overrideTest},
       {"JerryIO Path\n\nRun pushbackv2.txt via pure pursuit (intake on, hood drops at end)", jerryio_path_example},
       {"BC2145AUTO\n\nSmooth drift demo (contained)", BC2145AUTO},
       {"Full Send\n\nSame drift path, max slide", BC2145AUTO_fullsend},

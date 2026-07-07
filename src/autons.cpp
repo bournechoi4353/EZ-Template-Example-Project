@@ -1,4 +1,5 @@
 #include "main.h"
+#include "mcl_checkpoint.hpp"
 
 /////
 // For installation, upgrading, documentations, and tutorials, check out our website!
@@ -46,6 +47,40 @@ void default_constants() {
   chassis.odom_boomerang_dlead_set(0.625);     // This handles how aggressive the end of boomerang motions are
 
   chassis.pid_angle_behavior_set(ez::shortest);  // Changes the default behavior for turning, this defaults it to the shortest path there
+}
+
+///
+// ============================================================================
+//  overrideTest  --  match drive routine (encoder + IMU, no odom).
+// ----------------------------------------------------------------------------
+//  Intake on, drive in / turn / reverse to score, drop the hood, then
+//  reposition (turns + drives) and deploy the wing.  Uses pid_drive_set /
+//  turn_right_90, so distances come from the drive encoders and turns from the
+//  IMU -- place the robot, no seeding needed.  Tune by editing the per-move
+//  inches and the pros::delay holds.
+// ============================================================================
+///
+void overrideTest() {
+
+  //toggle
+  chassis.pid_drive_set(7_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-7_in, DRIVE_SPEED, true);
+
+  // Turn right 45 degrees
+  turn_right_45();
+
+  // Forward 34"
+  chassis.pid_drive_set(34_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  //checkpoint 1
+  mcl_checkpoint(-24, -48);
+
+  // place pin
+  top_intake_right.move(127);
+  
+
 }
 
 ///
@@ -363,57 +398,7 @@ void jerryio_path_example() {
   // hood.retract();
 }
 
-///
-// ============================================================================
-//  pushbacktest  --  match drive routine (encoder + IMU, no odom).
-// ----------------------------------------------------------------------------
-//  Intake on, drive in / turn / reverse to score, drop the hood, then
-//  reposition (turns + drives) and deploy the wing.  Uses pid_drive_set /
-//  turn_right_90, so distances come from the drive encoders and turns from the
-//  IMU -- place the robot, no seeding needed.  Tune by editing the per-move
-//  inches and the pros::delay holds.
-// ============================================================================
-///
-void pushbacktest() {
-  bottom_intake_left.move(127);
-  top_intake_right.move(127);
 
-  // Forward 24"
-  chassis.pid_drive_set(26_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-
-  // Turn right 90 degrees
-  turn_right_90();
-
-  // Forward 24"
-  chassis.pid_drive_set(16_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-
-  // Reverse 50"
-  chassis.pid_drive_set(-42_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-
-  hood.retract();      // down
-  pros::delay(1000); 
-  
-
-  chassis.pid_drive_set(15_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-
-  
-  turn_right_90();
-  chassis.pid_drive_set(10_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-  
-  turn_right_90();
-
-  chassis.pid_drive_set(36_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-
-  wing.extend();
-
-
-}
 
 // . . .
 // Make your own autonomous functions here!
