@@ -43,3 +43,7 @@ void odom_sandbox();
 void motion_profile_test();
 void profiling_showcase();
 void wall_reset_test();
+
+// Monte Carlo localization test: converge near a corner, catch a deliberate
+// 4" odom error, flush corrections between motions.
+void mcl_test();

@@ -544,3 +544,70 @@ void profiling_showcase() {
   pros::delay(400);
   profiled_drive(-12, 40, 80);
 }
+
+///
+// ============================================================================
+//  MCL Test  --  prove the particle filter end-to-end.
+// ----------------------------------------------------------------------------
+//  SETUP (tape measure, one time): place the robot FACING FORWARD (theta 0)
+//  at field (-48, -48), bottom-left, so that:
+//    - the BACK wall is ~22" behind robot center  (back sensor reads ~16")
+//    - the LEFT wall is ~22" left of robot center (left sensor reads ~16")
+//  Both sensors in range (back fixes Y, left fixes X); the right sensor sees
+//  nothing (>36" away).  Two walls -> both axes correct.
+//
+//  The test seeds odom 4" OFF on purpose (X only).  Watch the screen:
+//    1. pending X correction walks from 0 toward -4.0 as the cloud converges
+//       (Y pending stays ~0 -- the back wall says Y is fine).
+//    2. After the flush, odom X snaps to the truth; pending returns to ~0.
+//    3. Then it drives forward 24" and back, flushing at the pid_wait()
+//       boundary -- corrections between motions, never mid-servo.
+// ============================================================================
+///
+void mcl_test() {
+  constexpr double START_X = -48.0, START_Y = -48.0;  // true placement (field in)
+  constexpr double ODOM_ERR_X = 4.0;                  // deliberate seeded error
+
+  // Lie to odom by 4" in X.  MCL is seeded at the same wrong pose (that's all
+  // it would know in a real match) and has to FIND the truth from the walls.
+  chassis.odom_xyt_set(START_X + ODOM_ERR_X, START_Y, 0.0);
+  mcl::start(START_X + ODOM_ERR_X, START_Y, 3.0);
+  mcl::auto_flush_set(false);  // manual flushes here so each phase is visible
+
+  // Phase 1: sit still and let the cloud converge on the walls.
+  pros::delay(4000);
+
+  // Phase 2: flush at a safe point -- odom X should jump ~-4".
+  bool applied = mcl::flush_if_safe();
+  printf("[mcl_test] flush #1 %s | odom (%.1f, %.1f) vs true (%.1f, %.1f)\n",
+         applied ? "APPLIED" : "skipped",
+         chassis.odom_x_get(), chassis.odom_y_get(), START_X, START_Y);
+  pros::delay(1000);
+
+  // Phase 3: drive fwd 24" and back; flush only BETWEEN motions.
+  chassis.pid_drive_set(24_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+  mcl::flush_if_safe();
+
+  chassis.pid_drive_set(-24_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+  mcl::flush_if_safe();
+
+  // Park with live telemetry -- stop the program after reading.
+  while (true) {
+    ez::screen_print("MCL  odom(" + util::to_string_with_precision(chassis.odom_x_get()) +
+                         ", " + util::to_string_with_precision(chassis.odom_y_get()) + ")" +
+                         "\nest (" + util::to_string_with_precision(mcl::x()) +
+                         ", " + util::to_string_with_precision(mcl::y()) + ")" +
+                         "\npend(" + util::to_string_with_precision(mcl::pending_x()) +
+                         ", " + util::to_string_with_precision(mcl::pending_y()) + ")" +
+                         "\nsprd(" + util::to_string_with_precision(mcl::spread_x()) +
+                         ", " + util::to_string_with_precision(mcl::spread_y()) + ")" +
+                         " conf " + (mcl::confident_x() ? "X" : "-") + (mcl::confident_y() ? "Y" : "-") +
+                         "\nbeams ok " + std::to_string(mcl::sensors_accepted()) +
+                         " gated " + std::to_string(mcl::sensors_gated()) +
+                         " flushes " + std::to_string(mcl::flush_count()),
+                     1);
+    pros::delay(ez::util::DELAY_TIME);
+  }
+}

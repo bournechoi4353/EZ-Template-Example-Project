@@ -61,6 +61,7 @@ Tuning constants are in `default_constants()` in autons.cpp (`pid_odom_angular_c
 - **wall_reset.cpp / .hpp** — distance-sensor wall resets (`wall_reset_all()`); only valid when squared to a known wall. Sensor offset ~6.3" (center→face).
 - **motion_profile.cpp / .hpp** — `profiled_drive(in, max_vel, max_accel)`: standalone **trapezoidal** straight-line profile (borrows the motors, does NOT modify EZ-Template). kV/kA/kP need tuning per robot.
 - **jerryio_path.cpp / .hpp + path_assets.S** — run path.jerryio paths via EZ pure pursuit (below).
+- **mcl.cpp / .hpp + field_map.hpp** — Monte Carlo localization for Override (below).
 
 ## path.jerryio workflow
 
@@ -73,6 +74,16 @@ Key options:
 - `start_forward=true` (+ seed `(0,0,0)`) rotates the whole path so it **starts going forward** — place the robot facing forward, no measuring start angle. Makes the path relative to start (so wall-reset/abs-field coords won't apply).
 - `follow_path_reverse_tail(path, speed)` — for paths that **double back**: drives forward to the turnaround (heading flip >135°), then reverses the rest (e.g. back the output into a goal). ⚠️ if the path drives into a wall, the robot jams — keep the turnaround inside the field.
 
+## MCL (Monte Carlo localization, v1)
+
+**Invariant (do not weaken): "IMU owns heading; MCL owns position; a clean wall hit may RAISE AN ALARM about heading but never silently change it."** Override's field is 4-fold symmetric — a range-only filter can't tell the four 90° rotations apart, so particles are 2-DOF (x, y) sharing the live IMU heading, and corrections only ever call `odom_x_set`/`odom_y_set`.
+
+- Files: `mcl.cpp/.hpp` (engine) + `field_map.hpp` (geometry; v1 = perimeter walls only). Standalone — no EZ-Template edits.
+- Expectation: "automatic wall-reset," NOT continuous tracking. Corrects opportunistically off clean wall beams (robust floor + adaptive innovation gate vs 56 cups/63 pins/robots), coasts on odom otherwise.
+- Corrections are queued; flushed only when settled (between motions — never mid-servo), X/Y gated independently. `mcl::flush_if_safe()` after `pid_wait()` at natural boundaries; auto-flush also fires when still.
+- Usage: seed odom in FIELD coords, then `mcl::start(x, y)`. Test auton: **MCL Test** (place at (−52, −52) facing forward; it plants a 4" odom error and catches it).
+- v2 TODO (needs Appendix A): goal circles (diameter at beam height <4"), loader bodies, tile pitch 24.0 vs 23.4, real sensor offsets (placeholders = 6.3" back/right/left), collision detect + wall-heading sanity alarm.
+
 ## Controls (opcontrol)
 
 - **Tank** drive (left stick = left side, right stick = right side).
@@ -82,7 +93,7 @@ Key options:
 ## Autons (selector, in main.cpp)
 
 Default = **"pushbacktest"** (first entry). Real autons: `pushbacktest`, `jerryio_path_example` (JerryIO Path), `BC2145AUTO` + `_fullsend` (drift), `pistons`.
-Tuning/diagnostic tools: `Measure Offsets`, `Turn Test`, `Tracker Dir`, `Odom Spin`, `Odom Drive`, `Odom Sandbox`, `Motion Profile`, `Profiling Showcase`, `Wall Reset`.
+Tuning/diagnostic tools: `Measure Offsets`, `Turn Test`, `Tracker Dir`, `Odom Spin`, `Odom Drive`, `Odom Sandbox`, `Motion Profile`, `Profiling Showcase`, `Wall Reset`, `MCL Test`.
 
 ## Conventions
 

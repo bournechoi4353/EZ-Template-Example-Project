@@ -76,6 +76,7 @@ void initialize() {
       {"Motion Profile\n\nTrapezoidal profiled drive 48in, print traveled distance", motion_profile_test},
       {"Profiling Showcase\n\nFast vs gentle profiled straights in a 50x50 box", profiling_showcase},
       {"Wall Reset\n\nSquare to a wall; snap odom X/Y from the distance sensors", wall_reset_test},
+      {"MCL Test\n\nParticle filter: converge near corner, catch a planted 4in odom error, flush between motions", mcl_test},
       {"Turn Test\n\nTurn right 90, show actual heading + error", turn_test},
       {"Tracker Dir\n\nPush robot: forward=vert up, right=horiz up (verify before Measure Offsets)", tracker_dir_test},
       {"Odom Spin\n\nMotor pivots in place; reports x/y drift (should be ~0)", odom_spin_test},

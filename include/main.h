@@ -50,6 +50,7 @@
 #include "motion_profile.hpp"
 #include "wall_reset.hpp"
 #include "jerryio_path.hpp"  // Run path.jerryio paths via EZ pure pursuit
+#include "mcl.hpp"           // Monte Carlo localization (IMU owns heading; MCL owns position)
 
 
 /**
