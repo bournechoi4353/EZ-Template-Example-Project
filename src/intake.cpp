@@ -1,20 +1,15 @@
 #include "main.h"
 
-// Negative port reverses the motor (replaces the old `true` reverse flag).
-pros::Motor bottom_intake_left(-16, pros::MotorGears::blue);  // blue = 600 RPM (old _06)
+// negative port = reversed, blue cartridge = 600rpm
+pros::Motor bottom_intake_left(-16, pros::MotorGears::blue);
 pros::Motor top_intake_right(-17, pros::MotorGears::blue);
 
-// Sets the bottom intake speed in autonomous.
 void set_bottom_intake(int speed) {
   bottom_intake_left.move(speed);
 }
 
-// Driver control.  Call this every loop in opcontrol().
-//   R1 = intake in   (both motors together, in unison)
-//   R2 = reverse     (both motors together, the other way)
-//   L1 = hold to drop the hood STOPPER down; release and it pops back up
+// R1 = in, R2 = out, hold L1 to drop the hood. call this every loop in opcontrol
 void intake_control() {
-  // ---- Intake + outtake run together in unison ----
   if (master.get_digital(DIGITAL_R1)) {
     bottom_intake_left.move(127);
     top_intake_right.move(127);
@@ -26,11 +21,10 @@ void intake_control() {
     top_intake_right.move(0);
   }
 
-  // ---- Hood = stopper.  Rests UP (extended); hold L1 to drop it DOWN
-  //      (retracted); let go and it pops back UP. ----
+  // hood rests up, drops while L1 is held
   if (master.get_digital(DIGITAL_L1)) {
-    hood.retract();  // down while L1 held
+    hood.retract();
   } else {
-    hood.extend();   // up otherwise (resting state)
+    hood.extend();
   }
 }

@@ -9,23 +9,22 @@
 #include "main.h"
 
 namespace {
-// Advance past any spaces, tabs, and a single field separator (comma).
+// skip spaces/tabs and a comma
 const char* skip_sep(const char* p) {
   while (*p == ' ' || *p == '\t' || *p == ',') p++;
   return p;
 }
 
-// Shape each waypoint's speed with a trapezoidal profile along the PATH'S
-// ARC LENGTH: ramp up over the first `ramp` inches, cruise at max_speed, then
-// ramp down over the last `ramp` inches.  This is the MOTION_PROFILE behavior --
-// pure pursuit still steers along the curve, but the speed eases in and out.
+// trapezoid the waypoint speeds along the path's arc length: ramp up over the
+// first `ramp` inches, cruise, ramp down at the end. this is what
+// MOTION_PROFILE mode does -- pure pursuit still steers, the speed just eases
 void apply_trapezoid_speeds(std::vector<ez::odom>& pts, int max_speed) {
   if (pts.size() < 2) return;
 
-  // Speed never drops below this mid-path, so it can't stall on the ramps.
+  // never drop below this mid-path so it can't stall on the ramps
   const int min_speed = 30;
 
-  // Cumulative distance traveled up to each point.
+  // cumulative distance up to each point
   std::vector<double> s(pts.size(), 0.0);
   for (std::size_t i = 1; i < pts.size(); i++) {
     double dx = pts[i].target.x - pts[i - 1].target.x;
@@ -35,16 +34,16 @@ void apply_trapezoid_speeds(std::vector<ez::odom>& pts, int max_speed) {
   double total = s.back();
   if (total <= 0.0) return;
 
-  // Ramp over ~12 in (or 1/3 of the path on short paths, leaving a cruise).
+  // ramp over ~12", or a third of the path if it's short
   double ramp = std::min(total / 3.0, 12.0);
   if (ramp <= 0.0) return;
 
   for (std::size_t i = 0; i < pts.size(); i++) {
     double v = max_speed;
     if (s[i] < ramp)
-      v = max_speed * (s[i] / ramp);                 // ramping up
+      v = max_speed * (s[i] / ramp);                 // ramp up
     else if (s[i] > total - ramp)
-      v = max_speed * ((total - s[i]) / ramp);       // ramping down
+      v = max_speed * ((total - s[i]) / ramp);       // ramp down
     int iv = static_cast<int>(v);
     if (iv < min_speed) iv = min_speed;
     if (iv > max_speed) iv = max_speed;
@@ -59,14 +58,11 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
   std::vector<ez::odom> out;
   if (path.buf == nullptr || path.size == 0) return out;
 
-  // The embedded bytes are the raw .txt contents (not guaranteed null
-  // terminated), so build a bounded string from buf + size.
+  // embedded bytes aren't null terminated, bound the string with size
   std::string text(reinterpret_cast<const char*>(path.buf), path.size);
 
-  // path.jerryio's default export unit is CENTIMETERS, and the text export does
-  // NOT record which unit was used (the "uol" field stays 1 even for cm).  So we
-  // always treat the file as centimeters and convert to EZ-Template's inches.
-  // ==> ALWAYS export your paths in CENTIMETERS. <==
+  // the export doesn't record its unit (uol stays 1 even for cm), so we always
+  // treat the file as centimeters. ALWAYS export in cm.
   const double CM_PER_IN = 2.54;
 
   struct raw_point {
@@ -78,31 +74,30 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
   std::stringstream ss(text);
   std::string line;
   while (std::getline(ss, line)) {
-    // Tolerate Windows line endings from the web export.
+    // windows line endings from the web export
     if (!line.empty() && line.back() == '\r') line.pop_back();
 
-    // Trim leading whitespace.
     std::size_t start = line.find_first_not_of(" \t");
-    if (start == std::string::npos) continue;  // blank line
+    if (start == std::string::npos) continue;  // blank
     std::string trimmed = line.substr(start);
 
-    // path.jerryio writes the editor metadata after an "endData" marker.
+    // everything after "endData" is editor metadata
     if (trimmed.rfind("endData", 0) == 0) break;
 
-    // Parse "x, y, speed".  speed is optional and defaults to max_speed.
+    // parse "x, y, speed" -- speed is optional
     const char* c = trimmed.c_str();
     char* next = nullptr;
 
     double x = std::strtod(c, &next);
-    if (next == c) continue;  // not a coordinate line (header) -> skip
+    if (next == c) continue;  // header line, skip
     c = skip_sep(next);
 
     double y = std::strtod(c, &next);
-    if (next == c) continue;  // malformed -> skip
+    if (next == c) continue;  // malformed, skip
     c = skip_sep(next);
 
     double speed = std::strtod(c, &next);
-    if (next == c) speed = max_speed;  // no speed column on this line
+    if (next == c) speed = max_speed;  // no speed column
 
     raws.push_back({x, y, speed});
     if (speed > max_file_speed) max_file_speed = speed;
@@ -111,9 +106,9 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
   out.reserve(raws.size());
   for (const raw_point& r : raws) {
     ez::odom point;
-    point.target.x = r.x / CM_PER_IN;  // cm -> EZ inches
+    point.target.x = r.x / CM_PER_IN;  // cm -> in
     point.target.y = r.y / CM_PER_IN;
-    point.target.theta = ez::ANGLE_NOT_SET;  // pure-pursuit point (no boomerang)
+    point.target.theta = ez::ANGLE_NOT_SET;  // plain pure-pursuit point, no boomerang
     point.drive_direction = reverse ? ez::rev : ez::fwd;
 
     int speed = max_speed;
@@ -127,10 +122,9 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
     out.push_back(point);
   }
 
-  // Rotate + translate so the path STARTS at the origin heading forward (+Y).
-  // Then you just place the robot FACING FORWARD at the start (no need to match
-  // the path's real start angle) and it drives straight into the path.  This
-  // makes the path relative to the robot's start, so seed odom to (0,0,0).
+  // rotate + shift so the path starts at the origin heading forward. then you
+  // just place the robot facing forward and seed odom (0,0,0) -- no measuring
+  // the path's real start angle
   if (start_forward && out.size() >= 2) {
     double x0 = out[0].target.x, y0 = out[0].target.y;
     double th = std::atan2(out[1].target.x - x0, out[1].target.y - y0);  // initial heading
@@ -157,24 +151,22 @@ void jerryio::follow_path(const jerryio::asset& path, int max_speed,
     return;
   }
 
-  // Drive the path end-to-start (still nose-first) -- e.g. to retrace it home.
+  // end-to-start, still nose-first (retrace it home)
   if (reverse_order) std::reverse(points.begin(), points.end());
 
   if (how == jerryio::method::MOTION_PROFILE) {
-    // Ease the speed up and down along the curve, then let pure pursuit steer.
-    // We turn OFF EZ's slew here so it doesn't double-ramp the start.
+    // ease the speed along the curve; kill EZ's slew so it doesn't double-ramp
     apply_trapezoid_speeds(points, max_speed);
     slew_on = false;
   }
 
-  // EZ-Template's injected pure pursuit: it spaces the points out evenly and
-  // follows them.  We use the *injected* (not smoothed) variant because
-  // path.jerryio already gives a dense, smooth path -- no need to smooth twice.
+  // injected (not smoothed) pp -- jerryio paths are already dense and smooth,
+  // no point smoothing twice
   chassis.pid_odom_injected_pp_set(points, slew_on);
 }
 
 void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed) {
-  // start_forward = true, so seed odom to (0,0,0) and place the robot FORWARD.
+  // start_forward, so seed (0,0,0) and place the robot facing forward
   std::vector<ez::odom> pts = path_to_odom(path, max_speed, false, false, true);
   if (pts.size() < 3) {
     printf("[jerryio_path] reverse_tail: need >= 3 points, got %d.\n",
@@ -182,8 +174,7 @@ void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed
     return;
   }
 
-  // Find the TURNAROUND: the point where the path doubles back (heading flips
-  // ~180 deg) -- e.g. it drives to a wall, then comes back out.
+  // find the turnaround -- where the path doubles back on itself
   std::size_t split = 0;
   for (std::size_t i = 1; i + 1 < pts.size(); i++) {
     double h1 = std::atan2(pts[i].target.x - pts[i - 1].target.x,
@@ -193,7 +184,7 @@ void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed
     double d = h2 - h1;
     while (d > M_PI) d -= 2.0 * M_PI;
     while (d < -M_PI) d += 2.0 * M_PI;
-    if (std::fabs(d) > 2.36) {  // ~135 deg -> it's doubling back
+    if (std::fabs(d) > 2.36) {  // heading flipped ~135+ deg
       split = i;
       break;
     }
@@ -202,25 +193,24 @@ void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed
   printf("[reverse_tail] %d pts, split (turnaround) at %d\n",
          static_cast<int>(pts.size()), static_cast<int>(split));
 
-  if (split == 0) {  // no turnaround found -- just drive it all forward
+  if (split == 0) {  // never doubles back, just drive it
     chassis.pid_odom_injected_pp_set(pts, true);
     return;
   }
 
-  // 1) FORWARD to the turnaround.
+  // forward to the turnaround
   std::vector<ez::odom> fwd(pts.begin(), pts.begin() + split + 1);
   chassis.pid_odom_injected_pp_set(fwd, true);
   chassis.pid_wait();
 
-  // 2) REVERSE the rest -- back the output into the goal.
+  // reverse the rest -- backs the output into the goal
   std::vector<ez::odom> rev(pts.begin() + split, pts.end());
   for (auto& p : rev) p.drive_direction = ez::rev;
   chassis.pid_odom_injected_pp_set(rev, false);
-  // caller calls pid_wait() afterwards
+  // caller pid_wait()s
 }
 
 void jerryio::seed_start_pose(const jerryio::asset& path) {
-  // path_to_odom already converts to EZ inches.
   std::vector<ez::odom> points = path_to_odom(path, 1, false, false);
   if (points.size() < 2) {
     printf("[jerryio_path] seed_start_pose: need >=2 points, got %d.\n",
@@ -231,8 +221,7 @@ void jerryio::seed_start_pose(const jerryio::asset& path) {
   double x = points[0].target.x;
   double y = points[0].target.y;
 
-  // Heading toward the next point.  EZ uses 0 = +Y (north), clockwise positive,
-  // which is atan2(east, north) = atan2(dx, dy).
+  // heading toward the second point. EZ is 0 = +Y, clockwise, so atan2(dx, dy)
   double dx = points[1].target.x - x;
   double dy = points[1].target.y - y;
   double theta = ez::util::to_deg(std::atan2(dx, dy));
