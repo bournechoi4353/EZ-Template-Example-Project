@@ -291,61 +291,52 @@ void odom_drive_test() {
 //   sweepMs = how long to hold each drift -- bigger = wider, less compact
 ///
 void drift_demo(int high, int low, int sweepMs) {
-  chassis.drive_brake_set(MOTOR_BRAKE_COAST);  // let the wheels slide
+  chassis.drive_brake_set(MOTOR_BRAKE_COAST);  
 
   set_bottom_intake(100);  // intake running
 
-  // ---- Build momentum first so the slide actually happens ----
   chassis.drive_set(high, high);
   pros::delay(600);
 
-  // ---- Drift right: left side high, right side low ----
   chassis.drive_set(high, low);
   pros::delay(sweepMs);
-  wing.extend();  // pop the wings mid-drift
+  wing.extend();  
 
-  // ---- Sharp right pivot (both sides opposite = tight, snappy turn) ----
   chassis.drive_set(high, -high);
   pros::delay(350);
 
-  set_bottom_intake(-100);  // flip the intake
-
-  // ---- Drift left: right side high, left side low ----
+  set_bottom_intake(-100);  
   chassis.drive_set(low, high);
   pros::delay(sweepMs);
-  loader.extend();   // fire loader
-  descore.extend();  // and the descore
+  loader.extend();   
 
-  // ---- Sharp left pivot ----
+  descore.extend(); 
   chassis.drive_set(-high, high);
   pros::delay(350);
 
-  // ---- Long sweeping right drift ----
+
   chassis.drive_set(high, low);
   pros::delay(sweepMs + 300);
-  lift.extend();  // raise the lift mid-slide
-
-  // ---- Another sharp right pivot ----
+  lift.extend();  
   chassis.drive_set(high, -high);
   pros::delay(350);
 
-  // ---- Drift left to finish ----
+ 
   set_bottom_intake(100);
   chassis.drive_set(low, high);
   pros::delay(sweepMs);
   hood.extend();  // pop the hood
 
-  // ---- Ease out of it ----
+ 
   chassis.drive_set(0, 0);
   pros::delay(400);
   set_bottom_intake(0);
 
-  // ---- Retract everything back to the starting state ----
   wing.retract();
   loader.retract();  lift.retract();
   hood.retract();
 
-  // Raw control moved the wheels, so reset PID targets before any pid motions
+ 
   chassis.drive_sensor_reset();
   chassis.pid_targets_reset();
 }
