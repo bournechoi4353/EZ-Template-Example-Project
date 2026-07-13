@@ -5,21 +5,17 @@
 // https://ez-robotics.github.io/EZ-Template/
 /////
 
-// chassis: negative port = reversed, first motor per side is the sensing one
+// ports + measurements are all in config.hpp. first motor per side does the
+// sensing
 ez::Drive chassis(
-    {-3, 4, -5},    // left motors
-    {11, 12, -13},  // right motors
-    21,             // IMU
-    3.25,           // wheel diameter
-    450);           // wheel rpm
+    LEFT_DRIVE_PORTS,
+    RIGHT_DRIVE_PORTS,
+    IMU_PORT,
+    WHEEL_DIAMETER,
+    DRIVE_RPM);
 
-// horizontal tracker: rotation sensor on 6, 3.25" wheel. the -7.61 offset is
-// straight from measure offsets -- +7.61 ran x/y away on a spin, the sign matters
-ez::tracking_wheel horiz_tracker(6, 3.25, -7.61);
-
-// vertical tracker: port 15 (negative = reversed), 2.75" wheel, offset 1.05
-// (the "Left" number from measure offsets)
-ez::tracking_wheel vert_tracker(-15, 2.75, 1.05);
+ez::tracking_wheel horiz_tracker(HORIZ_TRACKER_PORT, HORIZ_TRACKER_DIAMETER, HORIZ_TRACKER_OFFSET);
+ez::tracking_wheel vert_tracker(VERT_TRACKER_PORT, VERT_TRACKER_DIAMETER, VERT_TRACKER_OFFSET);
 
 // runs as soon as the program starts
 void initialize() {

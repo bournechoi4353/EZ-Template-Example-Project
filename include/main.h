@@ -44,6 +44,7 @@
 #include "EZ-Template/api.hpp"
 
 // More includes here...
+#include "config.hpp"       // all robot ports + measurements, change them here
 #include "autons.hpp"
 #include "subsystems.hpp"
 #include "intake.hpp" // DAVID ADDED THISasdkads;ondjsaobouadsndfoasfbai'

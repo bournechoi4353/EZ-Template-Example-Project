@@ -1,8 +1,8 @@
 #include "main.h"
 
-// negative port = reversed, blue cartridge = 600rpm
-pros::Motor bottom_intake_left(-16, pros::MotorGears::blue);
-pros::Motor top_intake_right(-17, pros::MotorGears::blue);
+// ports in config.hpp. blue cartridge = 600rpm
+pros::Motor bottom_intake_left(BOTTOM_INTAKE_PORT, pros::MotorGears::blue);
+pros::Motor top_intake_right(TOP_INTAKE_PORT, pros::MotorGears::blue);
 
 void set_bottom_intake(int speed) {
   bottom_intake_left.move(speed);
