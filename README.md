@@ -17,3 +17,5 @@ Tank drive. R1 runs the intake, R2 reverses it, and holding L1 drops the hood. W
 ## Autons
 
 The selector shows up on the brain screen. The first entry is the main match routine; most of the rest are tuning and diagnostic tools. The test autons sit in a loop so their results stay on screen — just stop the program when you're done reading.
+
+thanks claudecode for helping find bugs and comment specific parts of the code
