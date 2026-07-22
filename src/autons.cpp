@@ -11,12 +11,15 @@ const int DRIVE_SPEED = 110;
 const int TURN_SPEED = 90;
 const int SWING_SPEED = 110;
 
+// milliseconds to wait between auton movements. change this one number; 0 = none
+const int PAUSE = 0;
+
 ///
 // Constants
 ///
 void default_constants() {
   // P, I, D, and Start I
-  chassis.pid_drive_constants_set(20.0, 0.0, 120.0);         // Fwd/rev (odom + non-odom); kD raised to brake the overshoot
+  chassis.pid_drive_constants_set(12.0, 0.0, 80.0);          // Fwd/rev; lower kP = longer, gentler deceleration into the target (cruise speed unchanged)
   chassis.pid_heading_constants_set(11.0, 0.0, 20.0);        // Holds the robot straight while going forward without odom
   chassis.pid_turn_constants_set(3.0, 0.05, 20.0, 15.0);     // Turn in place constants
   chassis.pid_swing_constants_set(6.0, 0.0, 65.0);           // Swing constants
@@ -49,157 +52,171 @@ void default_constants() {
   chassis.pid_angle_behavior_set(ez::shortest);  // Changes the default behavior for turning, this defaults it to the shortest path there
 }
 
-// main match auton. everything here is drive encoders + IMU (no odom), so
-// just place the robot and go. tune the inches and delays below.
+// simple match auton -- now uses EZ's IMU-based PID drive + turns (IMU on port 9).
 void overrideTest() {
 
-  //toggle
-  chassis.pid_drive_set(7_in, DRIVE_SPEED, true);
-  chassis.pid_wait();
-  chassis.pid_drive_set(-7_in, DRIVE_SPEED, true);
-
-  // Turn right 45 degrees
-  turn_right_45();
-
-  // Forward 34"
-  chassis.pid_drive_set(34_in, DRIVE_SPEED, true);
+  chassis.pid_drive_set(5_in, DRIVE_SPEED, true);
   chassis.pid_wait();
 
-  //checkpoint 1
-  mcl_checkpoint(-24, -48);
+  chassis.pid_drive_set(-5_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
 
-  // place pin
-  top_intake_right.move(127);
+  arm.move_absolute(ARM_LOW_POS, 70);   
+
+  chassis.pid_drive_set(17_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_set(-90_deg, TURN_SPEED);  
+  chassis.pid_wait();
+
   
+  chassis.pid_drive_set(17_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
 
+  arm.move_absolute(ARM_REST_POS, 100);
+  pros::delay(1000);  
+
+  chassis.pid_drive_set(-17_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_relative_set(-90_deg, TURN_SPEED); 
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(-24_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  arm.move_absolute(ARM_LOW_POS, 100); 
+  chassis.pid_turn_relative_set(-45_deg, TURN_SPEED);
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(24_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  arm.move_absolute(ARM_REST_POS, 100);
+  pros::delay(1000);  
+
+  chassis.pid_drive_set(-26_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_relative_set(-45_deg, TURN_SPEED);
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(-26_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_relative_set(180_deg, TURN_SPEED);
+  chassis.pid_wait();
+
+
+  chassis.pid_drive_set(23_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
 }
 
-///
-// Calculate the offsets of your tracking wheels
-///
-void measure_offsets() {
-  // Number of times to test
-  int iterations = 10;
+// programming skills run (60s solo). starter routine -- swap these blocks for
+// your real field path. building blocks: pid_drive_set / pid_turn_set /
+// pid_turn_relative_set + pid_wait, set_intake(speed), arm.move_absolute(pos, vel).
+void skills() {
 
-  // Our final offsets
-  double l_offset = 0.0, r_offset = 0.0, b_offset = 0.0, f_offset = 0.0;
+  chassis.pid_drive_set(5_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
 
-  // Reset all trackers if they exist
-  if (chassis.odom_tracker_left != nullptr) chassis.odom_tracker_left->reset();
-  if (chassis.odom_tracker_right != nullptr) chassis.odom_tracker_right->reset();
-  if (chassis.odom_tracker_back != nullptr) chassis.odom_tracker_back->reset();
-  if (chassis.odom_tracker_front != nullptr) chassis.odom_tracker_front->reset();
+  chassis.pid_drive_set(-5_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(5_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_set(90_deg, TURN_SPEED);
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(60_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+
   
-  for (int i = 0; i < iterations; i++) {
-    // Reset pid targets and get ready for running an auton
-    chassis.pid_targets_reset();
-    chassis.drive_imu_reset();
-    chassis.drive_sensor_reset();
-    chassis.drive_brake_set(MOTOR_BRAKE_HOLD);
-    chassis.odom_xyt_set(0_in, 0_in, 0_deg);
-    double imu_start = chassis.odom_theta_get();
-    double target = i % 2 == 0 ? 90 : 270;  // Switch the turn target every run from 270 to 90
-
-    // Turn to target at half power
-    chassis.pid_turn_set(target, 63, ez::raw);
+  // repeat this figure 7 times. ABSOLUTE turns (not relative) so heading error
+  // can't pile up over the reps -- every turn re-squares to a fixed heading.
+  // assumes we enter the loop facing 90 (from the turn_set(90) above).
+  for (int i = 0; i < 7; i++) {
+    chassis.pid_wait_until(3000);
+    chassis.pid_drive_set(-13_in, DRIVE_SPEED, true);
     chassis.pid_wait();
-    pros::delay(250);
 
-    // Calculate delta in angle
-    double t_delta = util::to_rad(fabs(util::wrap_angle(chassis.odom_theta_get() - imu_start)));
+    chassis.pid_turn_set(-60_deg, TURN_SPEED);   // 90 - 150
+    chassis.pid_wait();
 
-    // Calculate delta in sensor values that exist
-    double l_delta = chassis.odom_tracker_left != nullptr ? chassis.odom_tracker_left->get() : 0.0;
-    double r_delta = chassis.odom_tracker_right != nullptr ? chassis.odom_tracker_right->get() : 0.0;
-    double b_delta = chassis.odom_tracker_back != nullptr ? chassis.odom_tracker_back->get() : 0.0;
-    double f_delta = chassis.odom_tracker_front != nullptr ? chassis.odom_tracker_front->get() : 0.0;
+    chassis.pid_drive_set(18_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
 
-    // Calculate the radius that the robot traveled
-    l_offset += l_delta / t_delta;
-    r_offset += r_delta / t_delta;
-    b_offset += b_delta / t_delta;
-    f_offset += f_delta / t_delta;
+    chassis.pid_wait_until(3000); 
+
+    chassis.pid_drive_set(-18_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
+
+    chassis.pid_turn_set(90_deg, TURN_SPEED);    // back to 90
+    chassis.pid_wait();
+
+    chassis.pid_drive_set(13_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
+
+
   }
-
-  // Average all offsets
-  l_offset /= iterations;
-  r_offset /= iterations;
-  b_offset /= iterations;
-  f_offset /= iterations;
-
-  // Set new offsets to trackers that exist
-  if (chassis.odom_tracker_left != nullptr) chassis.odom_tracker_left->distance_to_center_set(l_offset);
-  if (chassis.odom_tracker_right != nullptr) chassis.odom_tracker_right->distance_to_center_set(r_offset);
-  if (chassis.odom_tracker_back != nullptr) chassis.odom_tracker_back->distance_to_center_set(b_offset);
-  if (chassis.odom_tracker_front != nullptr) chassis.odom_tracker_front->distance_to_center_set(f_offset);
-
-  // these are lost on restart -- write them down and hard-code them into the
-  // tracker constructors in main.cpp (vert_tracker uses the Left number)
-  printf("Offsets -> Left: %f  Right: %f  Back: %f  Front: %f\n", l_offset, r_offset, b_offset, f_offset);
-  while (true) {
-    ez::screen_print("Tracker offsets (put in main.cpp):"
-                         "\nLeft (vert):  " + util::to_string_with_precision(l_offset) +
-                         "\nRight: " + util::to_string_with_precision(r_offset) +
-                         "\nBack:  " + util::to_string_with_precision(b_offset) +
-                         "\nFront: " + util::to_string_with_precision(f_offset),
-                     1);
-    pros::delay(ez::util::DELAY_TIME);
-  }
-}
-
-// tight IMU 90s, relative to wherever we're currently facing
-void turn_right_90(int speed) {
-  chassis.pid_turn_relative_set(90_deg, speed);  // +90 = clockwise
+  chassis.pid_drive_set(-60_in, DRIVE_SPEED, true);
   chassis.pid_wait();
-}
 
-void turn_left_90(int speed) {
-  chassis.pid_turn_relative_set(-90_deg, speed);  // -90 = counter-clockwise
+  chassis.pid_turn_relative_set(180_deg, TURN_SPEED);
   chassis.pid_wait();
-}
 
-// turn right 90 from a zeroed IMU and show how far off we landed.
-// if the turn PID is good, Error reads ~0
-void turn_test() {
-  chassis.drive_imu_reset();
-  chassis.pid_targets_reset();
+  chassis.pid_drive_set(60_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
 
-  turn_right_90();
+  for (int i = 0; i < 7; i++) {
+    chassis.pid_wait_until(3000);
+    chassis.pid_drive_set(-13_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
 
-  double actual = chassis.drive_imu_get();
-  double error = actual - 90.0;
-  printf("Turn test -> Target: 90.0  Actual: %f  Error: %f\n", actual, error);
-  while (true) {
-    ez::screen_print("Turn accuracy test:"
-                         "\nTarget: 90.0"
-                         "\nActual: " + util::to_string_with_precision(actual) +
-                         "\nError:  " + util::to_string_with_precision(error),
-                     1);
-    pros::delay(ez::util::DELAY_TIME);
+    chassis.pid_turn_set(60_deg, TURN_SPEED);   // 90 - 150
+    chassis.pid_wait();
+
+    chassis.pid_drive_set(18_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
+
+    chassis.pid_wait_until(3000); 
+
+    chassis.pid_drive_set(-18_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
+
+    chassis.pid_turn_set(-90_deg, TURN_SPEED);    // back to 90
+    chassis.pid_wait();
+
+    chassis.pid_drive_set(13_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
+
+
   }
 }
 
-// trackers live in main.cpp, pull them in for the direction test
-extern ez::tracking_wheel vert_tracker;
-extern ez::tracking_wheel horiz_tracker;
 
-// tracker direction check -- run this BEFORE measure offsets. push forward:
-// vert counts up. push right: horiz counts up. if one counts down, flip its
-// port sign in main.cpp and check again. a backwards tracker poisons the
-// measured offsets.
-void tracker_dir_test() {
-  vert_tracker.reset();
-  horiz_tracker.reset();
-  chassis.odom_xyt_set(0_in, 0_in, 0_deg);
-  while (true) {
-    ez::screen_print("fwd: VERT up, horiz ~0 | right: HORIZ up | SPIN: x/y stay"
-                         "\nvert:  " + util::to_string_with_precision(vert_tracker.get()) +
-                         "   horiz: " + util::to_string_with_precision(horiz_tracker.get()) +
-                         "\nx: " + util::to_string_with_precision(chassis.odom_x_get()) +
-                         "   y: " + util::to_string_with_precision(chassis.odom_y_get()) +
-                         "   t: " + util::to_string_with_precision(chassis.odom_theta_get()),
+
+
+// cycles the arm through each preset height, pausing at each so you can line it
+// up against the tower and read the encoder. uses move_absolute -- the motor's
+// built-in smooth move, no PID tuning. edit the ARM_*_POS numbers in config.hpp
+// once you've captured your real heights.
+void arm_height_test() {
+  arm.tare_position_all();  // 0 = wherever the arm is resting right now
+
+  const int ARM_VEL = 100;  // move speed in deg/sec (green cartridge tops out ~200)
+  double heights[] = {ARM_LOW_POS, ARM_MID_POS, ARM_HIGH_POS, ARM_REST_POS};
+
+  for (double h : heights) {
+    arm.move_absolute(h, ARM_VEL);
+    pros::delay(1500);  // let it get there and settle before reading
+
+    printf("Arm -> target %.0f   actual %.1f\n", h, arm.get_position());
+    ez::screen_print("Arm height test"
+                         "\ntarget: " + util::to_string_with_precision(h) +
+                         "\nactual: " + util::to_string_with_precision(arm.get_position()),
                      1);
-    pros::delay(ez::util::DELAY_TIME);
   }
 }
 
@@ -229,145 +246,22 @@ void odom_spin_test() {
   }
 }
 
-// simplest odom move there is: drive straight to (0, 24). if the robot goes
-// BACKWARD instead, odom thinks forward is the wrong way -- that's a
-// heading/tracker sign problem, not the path.
-void odom_drive_test() {
-  chassis.odom_xyt_set(0_in, 0_in, 0_deg);  // origin, facing forward
-  chassis.pid_odom_set({{0_in, 24_in}, fwd, DRIVE_SPEED}, true);
-  chassis.pid_wait();
-
-  double x = chassis.odom_x_get();
-  double y = chassis.odom_y_get();
-  double t = chassis.odom_theta_get();
-  printf("Odom drive -> x: %.2f  y: %.2f  t: %.2f  (robot should go FWD, end ~0,24,0)\n", x, y, t);
-  while (true) {
-    ez::screen_print("Simple odom drive (fwd 24in):"
-                         "\n x: " + util::to_string_with_precision(x) +
-                         "\n y: " + util::to_string_with_precision(y) +
-                         "\n t: " + util::to_string_with_precision(t),
-                     1);
-    pros::delay(ez::util::DELAY_TIME);
-  }
-}
-
-// drift demo. one side at high power, the other barely moving, coast brakes
-// so nothing fights the slide. high/low = power per side, sweepMs = how long
-// each arc is held (bigger = wider).
-void drift_demo(int high, int low, int sweepMs) {
-  chassis.drive_brake_set(MOTOR_BRAKE_COAST);  
-
-  set_bottom_intake(100);  // intake running
-
-  chassis.drive_set(high, high);
-  pros::delay(600);
-
-  chassis.drive_set(high, low);
-  pros::delay(sweepMs);
-  wing.extend();  
-
-  chassis.drive_set(high, -high);
-  pros::delay(350);
-
-  set_bottom_intake(-100);  
-  chassis.drive_set(low, high);
-  pros::delay(sweepMs);
-  loader.extend();   
-
-  descore.extend(); 
-  chassis.drive_set(-high, high);
-  pros::delay(350);
-
-
-  chassis.drive_set(high, low);
-  pros::delay(sweepMs + 300);
-  lift.extend();  
-  chassis.drive_set(high, -high);
-  pros::delay(350);
-
- 
-  set_bottom_intake(100);
-  chassis.drive_set(low, high);
-  pros::delay(sweepMs);
-  hood.extend();  // pop the hood
-
- 
-  chassis.drive_set(0, 0);
-  pros::delay(400);
-  set_bottom_intake(0);
-
-  wing.retract();
-  loader.retract();  lift.retract();
-  hood.retract();
-
- 
-  chassis.drive_sensor_reset();
-  chassis.pid_targets_reset();
-}
-
-// contained drift. raise the 1100 (or lower the 30) for bigger looser slides
-void BC2145AUTO() {
-  drift_demo(110, 30, 1100);
-}
-
-// same thing, max power
-void BC2145AUTO_fullsend() {
-  drift_demo(127, 15, 1400);
-}
-
-// runs a path.jerryio path with EZ's pure pursuit. the file is compiled in
-// from static/ -- remember `pros make clean` after touching a .txt
-ASSET(pushbackv2_txt);  // static/pushbackv2.txt
-
-void jerryio_path_example() {
-  // intake on for the whole path
-  bottom_intake_left.move(127);
-  top_intake_right.move(127);
-
-  // path is rotated to start forward, so just place the robot facing forward
-  chassis.odom_xyt_set(0_in, 0_in, 0_deg);
-
-  // forward to the turnaround, then back the output into the goal (no 180)
-  jerryio::follow_path_reverse_tail(pushbackv2_txt, DRIVE_SPEED);
-  chassis.pid_wait();
-
-  // hood.retract();  // drop the hood once we're backed in
-}
-
-
-
 // . . .
 // Make your own autonomous functions here!
 // . . .
 
-void pistons() {
-  descore.extend(); pros::delay(500);
 
+// 48" square for tuning drive + turn PID -- four straights with 90 turns, no
+// tracking wheels needed (IMU + encoders). watch how cleanly it closes back to
+// the start: sides bowing = drive PID, corners off = turn PID.
+void pid_square() {
+  for (int i = 0; i < 4; i++) {
+    chassis.pid_drive_set(48_in, DRIVE_SPEED, true);
+    chassis.pid_wait();
 
-}
-
-// odom playground. start at the origin facing forward (same setup as the
-// odom drive test), drives a 48" square clockwise and comes home to (0,0).
-// whatever gap is left at the end is your drift.
-void odom_sandbox() {
-  chassis.odom_xyt_set(0_in, 0_in, 0_deg);
-
-  chassis.pid_odom_set({{0_in, 48_in}, fwd, DRIVE_SPEED}, true);    // up
-  chassis.pid_wait();
-
-  chassis.pid_odom_set({{48_in, 48_in}, fwd, DRIVE_SPEED}, true);   // right
-  chassis.pid_wait();
-
-  chassis.pid_odom_set({{48_in, 0_in}, fwd, DRIVE_SPEED}, true);    // down
-  chassis.pid_wait();
-
-  chassis.pid_odom_set({{0_in, 0_in}, fwd, DRIVE_SPEED}, true);     // home
-  chassis.pid_wait();
-
-  double x = chassis.odom_x_get();
-  double y = chassis.odom_y_get();
-  double t = chassis.odom_theta_get();
-  printf("Odom sandbox end -> x: %f  y: %f  theta: %f  (home is 0,0)\n", x, y, t);
+    chassis.pid_turn_relative_set(90_deg, TURN_SPEED);  // 90 right; 4 corners = full loop
+    chassis.pid_wait();
+  }
 }
 
 // straight 48" with the trapezoid profile instead of PID, then prints how
@@ -378,54 +272,6 @@ void motion_profile_test() {
 
   double traveled = (chassis.drive_sensor_left() + chassis.drive_sensor_right()) / 2.0;
   printf("Motion profile -> target: 48.0 in   traveled: %f in\n", traveled);
-}
-
-// square the robot up against a known wall and run this -- the pose should
-// jump to the true value. we seed a wrong pose on purpose so there's
-// something to correct.
-void wall_reset_test() {
-  chassis.odom_xyt_set(0_in, 0_in, 0_deg);  // deliberately wrong
-  printf("Wall reset -- BEFORE: x:%.2f y:%.2f t:%.2f\n",
-         chassis.odom_x_get(), chassis.odom_y_get(), chassis.odom_theta_get());
-
-  wall_reset_all();
-
-  printf("Wall reset -- AFTER:  x:%.2f y:%.2f t:%.2f\n",
-         chassis.odom_x_get(), chassis.odom_y_get(), chassis.odom_theta_get());
-}
-
-// drives a square alternating fast and gentle profiled sides so you can see
-// the difference: fast = hard ramp + clean stop with no PID overshoot,
-// gentle = low accel, no lurch (what you'd want on a tall tippy robot).
-// straights are profiled, corners are normal EZ turns.
-void profiling_showcase() {
-  const int LEG = 30;  // stays inside 50x50
-
-  // fast
-  profiled_drive(LEG, 40, 80);
-  pros::delay(700);
-  turn_right_90();
-
-  // gentle
-  profiled_drive(LEG, 16, 16);
-  pros::delay(700);
-  turn_right_90();
-
-  // fast
-  profiled_drive(LEG, 40, 80);
-  pros::delay(700);
-  turn_right_90();
-
-  // gentle, back to the start corner
-  profiled_drive(LEG, 16, 16);
-  pros::delay(700);
-  turn_right_90();
-
-  // bonus: too short to hit top speed, so the profile turns into a triangle.
-  // out and back so we stay put
-  profiled_drive(12, 40, 80);
-  pros::delay(400);
-  profiled_drive(-12, 40, 80);
 }
 
 // MCL end-to-end test. place the robot at field (-48, -48) facing forward,

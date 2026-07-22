@@ -47,7 +47,8 @@
 #include "config.hpp"       // all robot ports + measurements, change them here
 #include "autons.hpp"
 #include "subsystems.hpp"
-#include "intake.hpp" // DAVID ADDED THISasdkads;ondjsaobouadsndfoasfbai'
+#include "arm.hpp"           // arm subsystem (L1 up / L2 down in driver control)
+#include "intake.hpp"        // intake subsystem (R1 in / R2 out in driver control)
 #include "motion_profile.hpp"
 #include "wall_reset.hpp"
 #include "jerryio_path.hpp"  // Run path.jerryio paths via EZ pure pursuit

@@ -23,10 +23,12 @@ void initialize() {
 
   pros::delay(500);  // let the ports configure before anything runs
 
-  // horiz is behind the midline -> back, vert is left of center -> left.
-  // setting both enables full 2D odom
-  chassis.odom_tracker_back_set(&horiz_tracker);
-  chassis.odom_tracker_left_set(&vert_tracker);
+  // ODOM DISABLED: no tracking wheels on this bot (they'd go on ports 6/15). The
+  // IMU (port 9) still gives pid_drive_set / pid_turn_set their heading, so those
+  // work off the IMU + motor encoders. Full 2D odom (pid_odom_set) needs trackers
+  // -- mount them, then re-enable these two lines.
+  // chassis.odom_tracker_back_set(&horiz_tracker);
+  // chassis.odom_tracker_left_set(&vert_tracker);
 
   chassis.opcontrol_curve_buttons_toggle(true);   // adjust curve with the joystick buttons
   chassis.opcontrol_drive_activebrake_set(0.0);   // 0 = off, EZ recommends ~2
@@ -34,26 +36,19 @@ void initialize() {
 
   default_constants();
 
-  // descore stays up the whole match -- deploy at startup, never lower it
-  descore.extend();
+  // arm holds its position when no button is pressed instead of coasting down
+  arm.set_brake_mode_all(pros::MotorBrake::hold);
+  arm.tare_position_all();  // zero the arm encoders
 
   // auton selector (brain screen). first entry = default
   ez::as::auton_selector.autons_add({
-      {"overrideTest\n\nMatch drive routine: intake, score, hood, reposition, wing (encoder + IMU).", overrideTest},
-      {"JerryIO Path\n\nRun pushbackv2.txt via pure pursuit (intake on, hood drops at end)", jerryio_path_example},
-      {"BC2145AUTO\n\nSmooth drift demo (contained)", BC2145AUTO},
-      {"Full Send\n\nSame drift path, max slide", BC2145AUTO_fullsend},
-      {"pistons\n\nDemo: pistons test", pistons},
-      {"Odom Sandbox\n\nPlay with odometry -- drive to coordinates, print final pose", odom_sandbox},
+      {"Override Test\n\nMatch auton -- drive + turns + arm (EZ IMU PID)", overrideTest},
+      {"Skills\n\nProgramming skills run (60s solo)", skills},
+      {"Arm Height Test\n\nCycles the arm through low/mid/high presets (move_absolute), prints encoder pos", arm_height_test},
+      {"PID Square\n\n48in square (straights + 90 turns) -- tune drive/turn PID by how well it closes", pid_square},
       {"Motion Profile\n\nTrapezoidal profiled drive 48in, print traveled distance", motion_profile_test},
-      {"Profiling Showcase\n\nFast vs gentle profiled straights in a 50x50 box", profiling_showcase},
-      {"Wall Reset\n\nSquare to a wall; snap odom X/Y from the distance sensors", wall_reset_test},
-      {"MCL Test\n\nParticle filter: converge near corner, catch a planted 4in odom error, flush between motions", mcl_test},
-      {"Turn Test\n\nTurn right 90, show actual heading + error", turn_test},
-      {"Tracker Dir\n\nPush robot: forward=vert up, right=horiz up (verify before Measure Offsets)", tracker_dir_test},
       {"Odom Spin\n\nMotor pivots in place; reports x/y drift (should be ~0)", odom_spin_test},
-      {"Odom Drive\n\nDrive straight fwd 24in via odom; should end ~(0,24,0)", odom_drive_test},
-      {"Measure Offsets\n\nTurns the robot a bunch of times and calculates your tracking-wheel offsets.", measure_offsets},
+      {"MCL Test\n\nParticle filter: converge near corner, catch a planted 4in odom error, flush between motions", mcl_test},
   });
 
   chassis.initialize();
@@ -157,7 +152,8 @@ void opcontrol() {
     // chassis.opcontrol_arcade_flipped(ez::SPLIT);
     // chassis.opcontrol_arcade_flipped(ez::SINGLE);
 
-    intake_control();  // R1 in / R2 out / L1 hood
+    arm_control();     // L1 = arm up / L2 = arm down
+    intake_control();  // R1 = intake in / R2 = intake out
 
     pros::delay(ez::util::DELAY_TIME);  // keep this, EZ uses it for timing
   }

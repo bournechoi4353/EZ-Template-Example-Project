@@ -6,15 +6,6 @@
 
 extern Drive chassis;
 
-// pistons. extend/retract/toggle
-inline pros::adi::Pneumatics loader(LOADER_PORT, false);
-inline pros::adi::Pneumatics indexer(INDEXER_PORT, false);
-inline pros::adi::Pneumatics wing(WING_PORT, false);
-inline pros::adi::Pneumatics hood(HOOD_PORT, false);
-inline pros::adi::Pneumatics antiDump(ANTIDUMP_PORT, false);
-inline pros::adi::Pneumatics lift(LIFT_PORT, false);
-inline pros::adi::Pneumatics descore(DESCORE_PORT, true);  // always up, starts extended at boot
-
 // distance sensors, .get() returns mm
 inline pros::Distance distanceBack(DISTANCE_BACK_PORT);
 inline pros::Distance distanceRight(DISTANCE_RIGHT_PORT);
