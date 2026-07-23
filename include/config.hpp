@@ -40,6 +40,10 @@ constexpr double ARM_HIGH_POS = 2300;
 // ---- intake (positive = in) ----
 constexpr int INTAKE_PORT = 19;
 
+// ---- pneumatics (ADI ports 'A'-'H') -- PLACEHOLDERS, set to your real ports ----
+constexpr char ROTATE_PORT = 'A';  // claw rotate
+constexpr char GRAB_PORT    = 'B';  // claw grab
+
 // ---- distance sensors (NONE installed yet -- MCL reads these; keep them OFF
 // the drive/motor ports. set real ports when you add sensors) ----
 constexpr int DISTANCE_BACK_PORT  = 8;
