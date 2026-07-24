@@ -17,7 +17,7 @@ const char* skip_sep(const char* p) {
 
 // trapezoid the waypoint speeds along the path's arc length: ramp up over the
 // first `ramp` inches, cruise, ramp down at the end. this is what
-// MOTION_PROFILE mode does -- pure pursuit still steers, the speed just eases
+// MOTION_PROFILE mode does, pure pursuit still steers, the speed just eases
 void apply_trapezoid_speeds(std::vector<ez::odom>& pts, int max_speed) {
   if (pts.size() < 2) return;
 
@@ -84,7 +84,7 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
     // everything after "endData" is editor metadata
     if (trimmed.rfind("endData", 0) == 0) break;
 
-    // parse "x, y, speed" -- speed is optional
+    // parse "x, y, speed", speed is optional
     const char* c = trimmed.c_str();
     char* next = nullptr;
 
@@ -123,7 +123,7 @@ std::vector<ez::odom> jerryio::path_to_odom(const jerryio::asset& path,
   }
 
   // rotate + shift so the path starts at the origin heading forward. then you
-  // just place the robot facing forward and seed odom (0,0,0) -- no measuring
+  // just place the robot facing forward and seed odom (0,0,0), no measuring
   // the path's real start angle
   if (start_forward && out.size() >= 2) {
     double x0 = out[0].target.x, y0 = out[0].target.y;
@@ -145,7 +145,7 @@ void jerryio::follow_path(const jerryio::asset& path, int max_speed,
   std::vector<ez::odom> points = path_to_odom(path, max_speed, reverse, false, start_forward);
 
   if (points.size() < 2) {
-    printf("[jerryio_path] WARNING: parsed only %d point(s) -- check that the "
+    printf("[jerryio_path] WARNING: parsed only %d point(s), check that the "
            "path was exported from path.jerryio as x, y, speed text.\n",
            static_cast<int>(points.size()));
     return;
@@ -160,7 +160,7 @@ void jerryio::follow_path(const jerryio::asset& path, int max_speed,
     slew_on = false;
   }
 
-  // injected (not smoothed) pp -- jerryio paths are already dense and smooth,
+  // injected (not smoothed) pp, jerryio paths are already dense and smooth,
   // no point smoothing twice
   chassis.pid_odom_injected_pp_set(points, slew_on);
 }
@@ -174,7 +174,7 @@ void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed
     return;
   }
 
-  // find the turnaround -- where the path doubles back on itself
+  // find the turnaround, where the path doubles back on itself
   std::size_t split = 0;
   for (std::size_t i = 1; i + 1 < pts.size(); i++) {
     double h1 = std::atan2(pts[i].target.x - pts[i - 1].target.x,
@@ -203,7 +203,7 @@ void jerryio::follow_path_reverse_tail(const jerryio::asset& path, int max_speed
   chassis.pid_odom_injected_pp_set(fwd, true);
   chassis.pid_wait();
 
-  // reverse the rest -- backs the output into the goal
+  // reverse the rest, backs the output into the goal
   std::vector<ez::odom> rev(pts.begin() + split, pts.end());
   for (auto& p : rev) p.drive_direction = ez::rev;
   chassis.pid_odom_injected_pp_set(rev, false);

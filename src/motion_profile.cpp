@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-// trapezoidal profile for straight drives. standalone -- doesn't touch
+// trapezoidal profile for straight drives. standalone, doesn't touch
 // EZ-Template, just commands the motors with drive_set().
 //
 // PID only reacts to error. this plans the whole move up front (ramp up,
@@ -12,7 +12,7 @@
 //
 // tuning: set kV/kA to 0 first and raise kP until it follows the trapezoid
 // without lagging (lower if it oscillates). then raise kV until kP barely
-// has to correct -- roughly cruise power / max vel. add a little kA only if
+// has to correct, roughly cruise power / max vel. add a little kA only if
 // it lags on the ramp.
 
 static int clamp127(double v) {

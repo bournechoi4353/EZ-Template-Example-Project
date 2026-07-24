@@ -5,7 +5,7 @@
  * to add a path: drop static/<name>.txt, add PATH_ASSET <name> below, then
  * run `pros make clean` (the build can't tell a .txt changed).
  *
- * if the file name has dots, symbols can't have dots -- use the 2-arg form:
+ * if the file name has dots, symbols can't have dots, use the 2-arg form:
  *     PATH_ASSET path_jerryio, "path.jerryio.txt"
  * and use ASSET(path_jerryio_txt) in code.
  */
@@ -26,7 +26,7 @@
     .balign 4
 .endm
 
-/* ----- paths ----- */
+/* paths */
 PATH_ASSET example_path
 PATH_ASSET path_jerryio, "path.jerryio.txt"
 PATH_ASSET pushbackv2

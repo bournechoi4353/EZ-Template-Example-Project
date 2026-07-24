@@ -1,12 +1,9 @@
 #include "main.h"
 #include "mcl_checkpoint.hpp"
 
-/////
-// For installation, upgrading, documentations, and tutorials, check out our website!
-// https://ez-robotics.github.io/EZ-Template/
-/////
+// built on EZ-Template, docs at https://ez-robotics.github.io/EZ-Template/
 
-// These are out of 127
+// all out of 127
 const int DRIVE_SPEED = 110;
 const int TURN_SPEED = 90;
 const int SWING_SPEED = 110;
@@ -14,19 +11,17 @@ const int SWING_SPEED = 110;
 // milliseconds to wait between auton movements. change this one number; 0 = none
 const int PAUSE = 0;
 
-///
-// Constants
-///
+// drive / turn / odom PID tuning, everything EZ needs, set once at startup
 void default_constants() {
-  // P, I, D, and Start I
-  chassis.pid_drive_constants_set(12.0, 0.0, 80.0);          // Fwd/rev; lower kP = longer, gentler deceleration into the target (cruise speed unchanged)
-  chassis.pid_heading_constants_set(11.0, 0.0, 20.0);        // Holds the robot straight while going forward without odom
-  chassis.pid_turn_constants_set(3.0, 0.05, 20.0, 15.0);     // Turn in place constants
-  chassis.pid_swing_constants_set(6.0, 0.0, 65.0);           // Swing constants
-  chassis.pid_odom_angular_constants_set(4.0, 0.0, 52.5);    // Angular control for odom motions (kP lowered to stop the side-to-side sway)
-  chassis.pid_odom_boomerang_constants_set(5.8, 0.0, 32.5);  // Angular control for boomerang motions
+  // kP, kI, kD (turn also takes a start-I)
+  chassis.pid_drive_constants_set(12.0, 0.0, 80.0);          // fwd/rev, lower kP eases into the target instead of braking hard
+  chassis.pid_heading_constants_set(11.0, 0.0, 20.0);        // keeps us driving straight without odom
+  chassis.pid_turn_constants_set(3.0, 0.05, 20.0, 15.0);     // turning in place
+  chassis.pid_swing_constants_set(6.0, 0.0, 65.0);           // swings, one side pivots
+  chassis.pid_odom_angular_constants_set(4.0, 0.0, 52.5);    // heading for odom moves, lowered kP to kill the side-to-side sway
+  chassis.pid_odom_boomerang_constants_set(5.8, 0.0, 32.5);  // heading for boomerang moves
 
-  // Exit conditions
+  // when a move counts as "done"
   chassis.pid_turn_exit_condition_set(90_ms, 3_deg, 250_ms, 7_deg, 500_ms, 500_ms);
   chassis.pid_swing_exit_condition_set(90_ms, 3_deg, 250_ms, 7_deg, 500_ms, 500_ms);
   chassis.pid_drive_exit_condition_set(90_ms, 1_in, 250_ms, 3_in, 500_ms, 500_ms);
@@ -36,23 +31,23 @@ void default_constants() {
   chassis.pid_swing_chain_constant_set(5_deg);
   chassis.pid_drive_chain_constant_set(3_in);
 
-  // Slew constants
+  // slew, ramp up so we don't jerk off the line
   chassis.slew_turn_constants_set(3_deg, 70);
   chassis.slew_drive_constants_set(3_in, 70);
   chassis.slew_swing_constants_set(3_in, 80);
 
-  // The amount that turns are prioritized over driving in odom motions
-  // - if you have tracking wheels, you can run this higher.  1.0 is the max
+  // how much turning wins over driving in odom moves (1.0 = max).
+  // bump it up if you add tracking wheels
   chassis.odom_turn_bias_set(0.9);
 
-  chassis.odom_look_ahead_set(8_in);           // How far ahead the robot looks -- smaller = less endpoint overshoot, bigger = smoother
-  chassis.odom_boomerang_distance_set(16_in);  // This sets the maximum distance away from target that the carrot point can be
-  chassis.odom_boomerang_dlead_set(0.625);     // This handles how aggressive the end of boomerang motions are
+  chassis.odom_look_ahead_set(8_in);           // how far ahead it looks, smaller = less overshoot at the end, bigger = smoother
+  chassis.odom_boomerang_distance_set(16_in);  // furthest the carrot point can sit from the target
+  chassis.odom_boomerang_dlead_set(0.625);     // how aggressive the tail of a boomerang move is
 
-  chassis.pid_angle_behavior_set(ez::shortest);  // Changes the default behavior for turning, this defaults it to the shortest path there
+  chassis.pid_angle_behavior_set(ez::shortest);  // default turns take the shortest way around
 }
 
-// simple match auton -- now uses EZ's IMU-based PID drive + turns (IMU on port 9).
+// simple match auton, now uses EZ's IMU-based PID drive + turns (IMU on port 9).
 void overrideTest() {
 
   chassis.pid_drive_set(5_in, DRIVE_SPEED, true);
@@ -195,7 +190,7 @@ void skills() {
 
 
 // cycles the arm through each preset height, pausing at each so you can line it
-// up against the tower and read the encoder. uses move_absolute -- the motor's
+// up against the tower and read the encoder. uses move_absolute, the motor's
 // built-in smooth move, no PID tuning. edit the ARM_*_POS numbers in config.hpp
 // once you've captured your real heights.
 void arm_height_test() {
@@ -217,7 +212,7 @@ void arm_height_test() {
 }
 
 // pivot in place under motor power and report how far x/y drifted (should
-// be ~0). don't spin it by hand -- your hands slide the robot and fake a
+// be ~0). don't spin it by hand, your hands slide the robot and fake a
 // drift. small drift = nudge the horiz offset, big runaway = wrong sign.
 void odom_spin_test() {
   chassis.odom_xyt_set(0_in, 0_in, 0_deg);
@@ -242,12 +237,10 @@ void odom_spin_test() {
   }
 }
 
-// . . .
-// Make your own autonomous functions here!
-// . . .
+// add your own autons below
 
 
-// 48" square for tuning drive + turn PID -- four straights with 90 turns, no
+// 48" square for tuning drive + turn PID, four straights with 90 turns, no
 // tracking wheels needed (IMU + encoders). watch how cleanly it closes back to
 // the start: sides bowing = drive PID, corners off = turn PID.
 void pid_square() {
@@ -291,7 +284,7 @@ void mcl_test() {
   // sit still, let the cloud converge
   pros::delay(4000);
 
-  // flush -- odom X should jump ~-4"
+  // flush, odom X should jump ~-4"
   bool applied = mcl::flush_if_safe();
   printf("[mcl_test] flush #1 %s | odom (%.1f, %.1f) vs true (%.1f, %.1f)\n",
          applied ? "APPLIED" : "skipped",
@@ -307,7 +300,7 @@ void mcl_test() {
   chassis.pid_wait();
   mcl::flush_if_safe();
 
-  // park with live numbers -- stop the program after reading
+  // park with live numbers, stop the program after reading
   while (true) {
     ez::screen_print("MCL  odom(" + util::to_string_with_precision(chassis.odom_x_get()) +
                          ", " + util::to_string_with_precision(chassis.odom_y_get()) + ")" +

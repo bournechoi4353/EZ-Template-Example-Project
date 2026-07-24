@@ -15,7 +15,7 @@
 //   2. add `PATH_ASSET <name>` to src/path_assets.S (2-arg form if the file
 //      name has dots)
 //   3. declare ASSET(<name>_txt) in your auton file and follow it
-//   4. `pros make clean` -- the build can't tell a .txt changed
+//   4. `pros make clean`, the build can't tell a .txt changed
 //
 // coordinates: jerryio uses the same frame as EZ odom (origin at field
 // center, +x right, +y forward, heading 0 = +y, clockwise). the export
@@ -24,7 +24,7 @@
 // comes out 2.54x too small.
 //
 // the path is in absolute field coords, so odom has to know where the robot
-// actually is before following -- seed it yourself or use seed_start_pose().
+// actually is before following, seed it yourself or use seed_start_pose().
 
 namespace jerryio {
 
@@ -38,7 +38,7 @@ struct asset {
 //   PURE_PURSUIT   - flat max speed the whole way. fastest, use it when you
 //                    need to cover ground in the 15s auton
 //   MOTION_PROFILE - trapezoid speed along the path (ease in, cruise, ease
-//                    out). smoothest -- tippy loads, repeatable stops
+//                    out). smoothest, tippy loads, repeatable stops
 enum class method {
   PURE_PURSUIT,
   MOTION_PROFILE
@@ -62,7 +62,7 @@ std::vector<ez::odom> path_to_odom(const asset& path, int max_speed,
                                    bool scale_speeds = false,
                                    bool start_forward = false);
 
-// follow a path. this only STARTS the motion (like pid_odom_set) -- call
+// follow a path. this only STARTS the motion (like pid_odom_set), call
 // chassis.pid_wait() yourself so you can run subsystems mid-path.
 //   reverse       = drive the path backwards
 //   slew_on       = ramp up at the start (ignored for MOTION_PROFILE, it
@@ -77,7 +77,7 @@ void follow_path(const asset& path, int max_speed,
                  bool start_forward = false);
 
 // for paths that double back on themselves: drives forward to the turnaround,
-// then runs the rest in reverse -- e.g. collect on the way out, back the
+// then runs the rest in reverse, e.g. collect on the way out, back the
 // output into the goal on the way home. uses start_forward, so seed (0,0,0)
 // and place the robot facing forward. it pid_wait()s between the halves;
 // pid_wait() yourself after it returns for the reverse half

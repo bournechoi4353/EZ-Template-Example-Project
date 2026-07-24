@@ -8,7 +8,7 @@
 #include "field_map.hpp"
 #include "main.h"
 
-// MCL engine -- see mcl.hpp for the big picture (IMU owns heading, MCL owns
+// MCL engine, see mcl.hpp for the big picture (IMU owns heading, MCL owns
 // position). a few things in here look weird on purpose, don't "clean" them:
 //  - particles are (x, y) only, heading comes off the IMU every tick. ~1 deg
 //    of heading uncertainty is folded into the beam sigma instead
@@ -16,7 +16,7 @@
 //    can't zero out a good particle
 //  - the innovation gate widens with cloud spread. a fixed gate would reject
 //    the exact wall readings it needs to recover after a collision
-//  - short readings only get half authority -- that's cup territory
+//  - short readings only get half authority, that's cup territory
 //  - no process noise at rest. diversity comes from the resample jitter,
 //    otherwise repeated identical readings collapse the cloud onto a few
 //    duplicated particles
@@ -24,7 +24,7 @@
 
 namespace {
 
-// tunables -- retune on the real robot
+// tunables, retune on the real robot
 constexpr int N_PARTICLES = 300;   // drop to 150-200 if sharing CPU with AI vision
 constexpr int LOOP_MS = 33;        // ~30 Hz
 
@@ -54,7 +54,7 @@ constexpr double CONF_SPREAD = 3.0;   // per-axis cloud 1-sigma must be under th
 constexpr int GOOD_HITS_MIN = 5;      // and at least this many good updates in the window
 constexpr int GOOD_HITS_WINDOW = 15;
 constexpr double CORR_MIN = 0.25;     // ignore corrections smaller than this (in)
-constexpr double CORR_MAX = 8.0;      // clamp per flush -- bigger pending = alarm
+constexpr double CORR_MAX = 8.0;      // clamp per flush, bigger pending = alarm
 constexpr int STILL_TICKS = 5;        // settled = this many still ticks in a row (~165ms)
 constexpr double STILL_POS = 0.05;    // per-tick "still" thresholds
 constexpr double STILL_THETA = 0.2;   // degrees
@@ -165,12 +165,12 @@ bool flush_locked() {
   if (dx == 0.0 && dy == 0.0) return false;
 
   if (std::fabs(px) > CORR_MAX || std::fabs(py) > CORR_MAX)
-    printf("[mcl] ALARM: pending correction (%.1f, %.1f) exceeds %.1f\" -- clamped, investigate\n",
+    printf("[mcl] ALARM: pending correction (%.1f, %.1f) exceeds %.1f\", clamped, investigate\n",
            px, py, CORR_MAX);
 
   chassis.odom_x_set(ox + dx);
   chassis.odom_y_set(oy + dy);
-  // the set jumps odom, so shift the motion model's reference too -- otherwise
+  // the set jumps odom, so shift the motion model's reference too, otherwise
   // next tick's delta would move the particles by the correction again
   last_ox += dx;
   last_oy += dy;
@@ -233,7 +233,7 @@ void tick() {
     b.diry = std::cos(a);
 
     // innovation gate vs the current estimate, widened by cloud spread along
-    // the ray -- stays open after a collision so recovery is possible, tight
+    // the ray, stays open after a collision so recovery is possible, tight
     // when confident (a cup 12" in front of the wall gets dropped here)
     double pred_est = field::raycast(est_x + b.fox, est_y + b.foy, b.dirx, b.diry);
     b.sigma = SIGMA_BASE + SIGMA_HEADING * reading;
@@ -246,7 +246,7 @@ void tick() {
       continue;
     }
 
-    // short readings are cup territory -- half authority
+    // short readings are cup territory, half authority
     b.auth = 0.5 + 0.5 * std::clamp((reading - AUTH_LOW) / (AUTH_FULL - AUTH_LOW), 0.0, 1.0);
     beams.push_back(b);
   }
@@ -275,7 +275,7 @@ void tick() {
     }
 
     if (wsum <= 1e-300) {
-      // every beam disagreed with every particle -- reset the weights instead
+      // every beam disagreed with every particle, reset the weights instead
       // of dividing by zero. the innovation gate makes this rare
       for (particle& p : parts) p.w = 1.0 / parts.size();
     } else {
@@ -288,7 +288,7 @@ void tick() {
       if (1.0 / neff_den < parts.size() / 2.0) resample();
     }
   } else {
-    // nothing measured -- coast, the cloud already shifted with odom
+    // nothing measured, coast, the cloud already shifted with odom
     refresh_estimate();
   }
 
@@ -318,7 +318,7 @@ void mcl::start(double x, double y, double seed_spread) {
   mtx.take();
 
   // measured sensor geometry (body frame, facing CW from forward). off_y
-  // only matters for the back sensor -- it aims -Y so its setback biases the
+  // only matters for the back sensor, it aims -Y so its setback biases the
   // range; the side sensors only care about off_x. beam_height is just a
   // note, but 9-10" is high and may shoot over a short field wall, which
   // shows up as gated side beams
@@ -374,7 +374,7 @@ bool mcl::flush_if_safe() {
   return applied;
 }
 
-// telemetry, plain double reads -- a torn read costs one garbage screen
+// telemetry, plain double reads, a torn read costs one garbage screen
 // frame, not a control action
 double mcl::x() { return est_x; }
 double mcl::y() { return est_y; }

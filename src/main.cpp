@@ -1,9 +1,6 @@
 #include "main.h"
 
-/////
-// For installation, upgrading, documentations, and tutorials, check out our website!
-// https://ez-robotics.github.io/EZ-Template/
-/////
+// built on EZ-Template, docs at https://ez-robotics.github.io/EZ-Template/
 
 // ports + measurements are all in config.hpp. first motor per side does the
 // sensing
@@ -25,8 +22,8 @@ void initialize() {
 
   // ODOM DISABLED: no tracking wheels on this bot (they'd go on ports 6/15). The
   // IMU (port 9) still gives pid_drive_set / pid_turn_set their heading, so those
-  // work off the IMU + motor encoders. Full 2D odom (pid_odom_set) needs trackers
-  // -- mount them, then re-enable these two lines.
+  // work off the IMU + motor encoders. Full 2D odom (pid_odom_set) needs trackers,
+  // so mount them, then re-enable these two lines.
   // chassis.odom_tracker_back_set(&horiz_tracker);
   // chassis.odom_tracker_left_set(&vert_tracker);
 
@@ -42,10 +39,10 @@ void initialize() {
 
   // auton selector (brain screen). first entry = default
   ez::as::auton_selector.autons_add({
-      {"Override Test\n\nMatch auton -- drive + turns + arm (EZ IMU PID)", overrideTest},
+      {"Override Test\n\nMatch auton: drive + turns + arm (EZ IMU PID)", overrideTest},
       {"Skills\n\nProgramming skills run (60s solo)", skills},
       {"Arm Height Test\n\nCycles the arm through low/mid/high presets (move_absolute), prints encoder pos", arm_height_test},
-      {"PID Square\n\n48in square (straights + 90 turns) -- tune drive/turn PID by how well it closes", pid_square},
+      {"PID Square\n\n48in square (straights + 90 turns), tune drive/turn PID by how well it closes", pid_square},
       {"Motion Profile\n\nTrapezoidal profiled drive 48in, print traveled distance", motion_profile_test},
       {"Odom Spin\n\nMotor pivots in place; reports x/y drift (should be ~0)", odom_spin_test},
       {"MCL Test\n\nParticle filter: converge near corner, catch a planted 4in odom error, flush between motions", mcl_test},

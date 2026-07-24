@@ -5,7 +5,7 @@
 // wall resets off the distance sensors. when we're squared up against a wall
 // the sensor tells us exactly how far it is, so we can recompute the robot's
 // real x or y and snap odom to it. only call these when the robot is actually
-// facing/backed into a wall -- mid-field the sensor just sees robots and
+// facing/backed into a wall, mid-field the sensor just sees robots and
 // game pieces.
 
 // reset one axis from one sensor.

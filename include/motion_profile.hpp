@@ -1,6 +1,6 @@
 #pragma once
 
-// trapezoidal profile for straight drives. standalone -- doesn't touch
+// trapezoidal profile for straight drives. standalone, doesn't touch
 // EZ-Template, just borrows the motors.
 //   target_in = inches, negative = backward
 //   max_vel = in/s, max_accel = in/s^2
