@@ -112,9 +112,7 @@ void overrideTest() {
   chassis.pid_wait();
 }
 
-// programming skills run (60s solo). starter routine -- swap these blocks for
-// your real field path. building blocks: pid_drive_set / pid_turn_set /
-// pid_turn_relative_set + pid_wait, set_intake(speed), arm.move_absolute(pos, vel).
+
 void skills() {
 
   chassis.pid_drive_set(5_in, DRIVE_SPEED, true);
@@ -133,15 +131,13 @@ void skills() {
   chassis.pid_wait();
 
   
-  // repeat this figure 7 times. ABSOLUTE turns (not relative) so heading error
-  // can't pile up over the reps -- every turn re-squares to a fixed heading.
-  // assumes we enter the loop facing 90 (from the turn_set(90) above).
-  for (int i = 0; i < 7; i++) {
+ 
+  for (int i = 0; i < 5; i++) {
     chassis.pid_wait_until(3000);
     chassis.pid_drive_set(-13_in, DRIVE_SPEED, true);
     chassis.pid_wait();
 
-    chassis.pid_turn_set(-60_deg, TURN_SPEED);   // 90 - 150
+    chassis.pid_turn_set(-60_deg, TURN_SPEED);   
     chassis.pid_wait();
 
     chassis.pid_drive_set(18_in, DRIVE_SPEED, true);
@@ -152,7 +148,7 @@ void skills() {
     chassis.pid_drive_set(-18_in, DRIVE_SPEED, true);
     chassis.pid_wait();
 
-    chassis.pid_turn_set(90_deg, TURN_SPEED);    // back to 90
+    chassis.pid_turn_set(90_deg, TURN_SPEED);    
     chassis.pid_wait();
 
     chassis.pid_drive_set(13_in, DRIVE_SPEED, true);
@@ -169,7 +165,7 @@ void skills() {
   chassis.pid_drive_set(60_in, DRIVE_SPEED, true);
   chassis.pid_wait();
 
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < 5; i++) {
     chassis.pid_wait_until(3000);
     chassis.pid_drive_set(-13_in, DRIVE_SPEED, true);
     chassis.pid_wait();
