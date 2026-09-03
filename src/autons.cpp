@@ -99,9 +99,6 @@ void redLeft() {
   clawPiston.extend();
   chassis.pid_drive_set(5_in, 127, true);
   chassis.pid_wait();
-
-
-
 }
 
 void redRight() {
