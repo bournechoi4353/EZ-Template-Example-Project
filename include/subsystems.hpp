@@ -2,7 +2,7 @@
 
 #include "EZ-Template/api.hpp"
 #include "api.h"
-#include "config/ports.hpp"  // ports live here
+#include "ports.hpp"  // ports live here
 
 extern Drive chassis;
 

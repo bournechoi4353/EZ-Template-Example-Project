@@ -1,11 +1,11 @@
-#include "localization/mcl.hpp"
+#include "mcl.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <random>
 #include <vector>
 
-#include "localization/field_map.hpp"
+#include "field_map.hpp"
 #include "main.h"
 
 // MCL engine, see mcl.hpp for the big picture (IMU owns heading, MCL owns
