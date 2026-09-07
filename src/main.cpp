@@ -1,5 +1,5 @@
 #include "main.h"
-#include "brain_screen.hpp"
+#include "ui/brain_screen.hpp"
 
 // built on EZ-Template, docs at https://ez-robotics.github.io/EZ-Template/
 

@@ -1,5 +1,5 @@
 #include "main.h"
-#include "brain_screen.hpp"
+#include "ui/brain_screen.hpp"
 
 // built on EZ-Template, docs at https://ez-robotics.github.io/EZ-Template/
 
@@ -48,21 +48,21 @@ void default_constants() {
 
 void redLeft() {
   chassis.pid_drive_set(-5_in, 127, true);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_drive_set(7_in, 127, true);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_drive_set(-5_in, 127, true);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_drive_set(7_in, 127, true);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
 
   chassis.pid_swing_set(ez::RIGHT_SWING, 60_deg, 90);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
 
   arm.move_absolute(350, 100);
 
   chassis.pid_drive_set(-14_in, 127, true);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   set_arm(-40);
   pros::delay(800);
   clawPiston.extend();
@@ -82,18 +82,62 @@ void redLeft() {
   arm.move_absolute(900, 100);
 
   chassis.pid_swing_relative_set(ez::LEFT_SWING, -90_deg, 40);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_drive_set(15_in, 70, false);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_turn_relative_set(-40_deg, 120);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   chassis.pid_drive_set(-10_in, 70, false);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   set_arm(-40);
   pros::delay(800);
   clawPiston.extend();
   chassis.pid_drive_set(5_in, 70, false);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
+
+}
+
+void redRight() {
+  chassis.pid_drive_set(-5_in, 127, false);
+  chassis.pid_wait();
+  chassis.pid_drive_set(7_in, 127, false);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-5_in, 127, false);
+  chassis.pid_wait();
+  chassis.pid_drive_set(7_in, 127, false);
+  chassis.pid_wait();
+
+  arm.move_absolute(350, 100);
+  chassis.pid_drive_set(-18_in, 127, true);
+  chassis.pid_wait();
+  chassis.pid_turn_relative_set(-90_deg, 120);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-19_in, 60, true);
+  chassis.pid_wait();
+  chassis.pid_drive_set(1.5_in, 60, true);
+  chassis.pid_wait();
+
+  set_arm(-40);
+  pros::delay(800);
+  clawPiston.extend();
+  pros::delay(700);
+  set_arm(0);
+
+
+  chassis.pid_drive_set(20_in, 90, true);
+  chassis.pid_wait();
+
+  chassis.pid_turn_relative_set(-45_deg, 120);
+  chassis.pid_wait();
+  arm.move_absolute(-20, 100);
+  chassis.pid_drive_set(-14_in, 50, true);
+  chassis.pid_wait();
+  chassis.pid_turn_relative_set(45_deg, 120);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-30.5_in, 50, true);
+  chassis.pid_wait();
+
+
 }
 
 void blueLeft() {

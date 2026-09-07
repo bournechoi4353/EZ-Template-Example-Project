@@ -1,4 +1,4 @@
-#include "jerryio_path.hpp"
+#include "autonomous/jerryio_path.hpp"
 
 #include <algorithm>
 #include <cmath>

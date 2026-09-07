@@ -1,4 +1,4 @@
-#include "brain_screen.hpp"
+#include "ui/brain_screen.hpp"
 
 #include <cmath>
 

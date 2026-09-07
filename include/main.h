@@ -44,17 +44,17 @@
 #include "EZ-Template/api.hpp"
 
 // More includes here...
-#include "ports.hpp"         // all robot ports + measurements, change them here
-#include "autons.hpp"
-#include "subsystems.hpp"
-#include "arm.hpp"           // lift subsystem (actuator only, see controls.hpp for buttons)
-#include "claw.hpp"          // claw roller + piston (actuator only, see controls.hpp for buttons)
-#include "controls.hpp"      // every driver-control button binding lives here
-#include "motion_profile.hpp"
-#include "wall_align.hpp"   // closed-loop drive-to-distance + square-to-walls off the distance sensors
-#include "wall_reset.hpp"   // one-shot odom snap off the distance sensors (TitanReset-based)
-#include "jerryio_path.hpp"  // Run path.jerryio paths via EZ pure pursuit
-#include "mcl.hpp"           // Monte Carlo localization (IMU owns heading; MCL owns position)
+#include "config/ports.hpp"         // all robot ports + measurements, change them here
+#include "autonomous/autons.hpp"
+#include "subsystems/subsystems.hpp"
+#include "subsystems/arm.hpp"           // lift subsystem (actuator only, see controls.hpp for buttons)
+#include "subsystems/claw.hpp"          // claw roller + piston (actuator only, see controls.hpp for buttons)
+#include "subsystems/controls.hpp"      // every driver-control button binding lives here
+#include "autonomous/motion_profile.hpp"
+#include "localization/wall_align.hpp"   // closed-loop drive-to-distance + square-to-walls off the distance sensors
+#include "localization/wall_reset.hpp"   // one-shot odom snap off the distance sensors (TitanReset-based)
+#include "autonomous/jerryio_path.hpp"  // Run path.jerryio paths via EZ pure pursuit
+#include "localization/mcl.hpp"           // Monte Carlo localization (IMU owns heading; MCL owns position)
 
 
 /**
